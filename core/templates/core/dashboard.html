@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель управления</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #42e695 0%, #3bb2b8 100%);
+            --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background: var(--primary-gradient);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .balance-card {
+            background: var(--primary-gradient);
+            color: white;
+        }
+        .exchange-card {
+            background: var(--success-gradient);
+            color: white;
+        }
+        .company-card {
+            background: var(--warning-gradient);
+            color: white;
+        }
+        .nav-link {
+            color: white !important;
+            font-weight: 500;
+        }
+        .nav-link:hover {
+            opacity: 0.9;
+        }
+        .badge {
+            font-size: 0.8em;
+            padding: 5px 10px;
+        }
+        .transaction-item {
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        .transaction-item.income {
+            border-left-color: #42e695;
+        }
+        .transaction-item.outcome {
+            border-left-color: #f5576c;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="bi bi-bank"></i> Банковская система
+            </a>
+            <div class="d-flex align-items-center">
+                <span class="text-white me-3">ID: {{ user.id }}</span>
+                <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-box-arrow-right"></i> Выход
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Приветствие -->
+        <div class="row mb-4">
+            <div class="col">
+                <h3>Добро пожаловать, {{ user.username }}!</h3>
+                <p class="text-muted">Ваш ID: {{ user.id }} | Последний вход: {{ user.last_login|date:"d.m.Y H:i" }}</p>
+            </div>
+        </div>
+
+        <!-- Балансы и курс -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="card balance-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-wallet2"></i> Ваш баланс</h5>
+                        <h2 class="card-text">{{ profile.balance_rub|floatformat:2 }} ₽</h2>
+                        <h2 class="card-text">${{ profile.balance_usd|floatformat:2 }}</h2>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="card exchange-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-currency-exchange"></i> Курс обмена</h5>
+                        <h1 class="card-text">1 USD = {{ exchange_rate|floatformat:2 }} RUB</h1>
+                        <p class="card-text">Курс обновляется автоматически</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="card company-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-building"></i> Компании</h5>
+                        <h2 class="card-text">{{ owned_companies.count }}</h2>
+                        <p class="card-text">Управляемых компаний</p>
+                        <a href="{% url 'create_company' %}" class="btn btn-light btn-sm">
+                            Создать компанию
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="row mb-4">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-lightning"></i> Быстрые действия</h5>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <a href="{% url 'transfer' %}" class="btn btn-primary w-100 mb-2">
+                                    <i class="bi bi-arrow-right-circle"></i> Перевод
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{% url 'exchange' %}" class="btn btn-success w-100 mb-2">
+                                    <i class="bi bi-currency-exchange"></i> Обмен валют
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                {% if owned_companies %}
+                                <a href="{% url 'company_dashboard' owned_companies.first.id %}" class="btn btn-warning w-100 mb-2">
+                                    <i class="bi bi-building"></i> Моя компания
+                                </a>
+                                {% else %}
+                                <a href="{% url 'create_company' %}" class="btn btn-warning w-100 mb-2">
+                                    <i class="bi bi-plus-circle"></i> Создать компанию
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Компании и транзакции -->
+        <div class="row">
+            <!-- Ваши компании -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-building"></i> Ваши компании</h5>
+                        {% if companies %}
+                            <div class="list-group">
+                                {% for company in companies %}
+                                <a href="{% url 'company_dashboard' company.id %}" 
+                                   class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ company.name }}</h6>
+                                        {% if company.owner == user %}
+                                        <span class="badge bg-primary">Владелец</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Сотрудник</span>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">
+                                        Баланс: {{ company.balance_rub|floatformat:2 }} ₽ / 
+                                        ${{ company.balance_usd|floatformat:2 }}
+                                    </small>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Вы не состоите в компаниях</p>
+                            <a href="{% url 'create_company' %}" class="btn btn-primary">
+                                Создать свою первую компанию
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Последние транзакции -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-clock-history"></i> Последние операции</h5>
+                        {% if transactions %}
+                            {% for transaction in transactions %}
+                            <div class="transaction-item 
+                                {% if transaction.to_user == user %}income
+                                {% elif transaction.from_user == user %}outcome
+                                {% endif %}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <strong>{{ transaction.get_transaction_type_display }}</strong>
+                                    <span class="{% if transaction.to_user == user %}text-success{% else %}text-danger{% endif %}">
+                                        {% if transaction.to_user == user %}+{% else %}-{% endif %}
+                                        {{ transaction.amount }} {{ transaction.currency }}
+                                    </span>
+                                </div>
+                                <small class="text-muted">
+                                    {% if transaction.to_user == user %}
+                                        От: {{ transaction.from_user.username }}
+                                    {% else %}
+                                        Кому: {{ transaction.to_user.username }}
+                                    {% endif %}
+                                    | {{ transaction.timestamp|date:"d.m.Y H:i" }}
+                                </small>
+                                {% if transaction.description %}
+                                <p class="mb-0"><small>{{ transaction.description }}</small></p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">Нет операций</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+

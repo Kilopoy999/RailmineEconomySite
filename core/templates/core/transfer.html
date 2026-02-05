@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Перевод средств</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        .transfer-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        .transfer-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .balance-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 5px solid #667eea;
+        }
+        .btn-transfer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            border-radius: 10px;
+            width: 100%;
+            transition: transform 0.3s;
+        }
+        .btn-transfer:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .form-control:focus {
+            border-color: #764ba2;
+            box-shadow: 0 0 0 0.25rem rgba(118, 75, 162, 0.25);
+        }
+        .company-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                <i class="bi bi-arrow-left"></i> Назад в панель
+            </a>
+            <span class="navbar-text text-white">
+                Ваш ID: <strong>{{ user.id }}</strong>
+            </span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="transfer-container">
+            <div class="transfer-header">
+                <h2><i class="bi bi-arrow-right-circle"></i> Перевод средств</h2>
+                <p class="mb-0">Быстрый и безопасный перевод между пользователями и компаниями</p>
+            </div>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-{% if message.tags == 'error' %}exclamation-triangle{% else %}check-circle{% endif %}"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Балансы -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="balance-card">
+                        <h6><i class="bi bi-currency-ruble"></i> Рубли</h6>
+                        <h3 class="text-primary">{{ request.user.profile.balance_rub|floatformat:2 }} ₽</h3>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="balance-card">
+                        <h6><i class="bi bi-currency-dollar"></i> Доллары</h6>
+                        <h3 class="text-success">${{ request.user.profile.balance_usd|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Форма перевода -->
+            <form method="post" id="transferForm">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">ID получателя</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                        {{ form.to_user_id }}
+                    </div>
+                    <div class="form-text">
+                        Введите ID пользователя или ID компании
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Сумма</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-cash"></i></span>
+                            {{ form.amount }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Валюта</label>
+                        {{ form.currency }}
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Описание (необязательно)</label>
+                    {{ form.description }}
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn-transfer">
+                        <i class="bi bi-send-check"></i> Выполнить перевод
+                    </button>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                        Отмена
+                    </a>
+                </div>
+            </form>
+            
+            <!-- Ваши компании для быстрого перевода -->
+            {% if companies %}
+            <div class="mt-4">
+                <h5><i class="bi bi-building"></i> Перевод в ваши компании:</h5>
+                <div class="company-list">
+                    <div class="list-group">
+                        {% for company in companies %}
+                        <button type="button" class="list-group-item list-group-item-action" 
+                                onclick="setCompanyTransfer('{{ company.id }}', '{{ company.name }}')">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ company.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">ID: {{ company.id }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <small>{{ company.balance_rub|floatformat:2 }} ₽ / ${{ company.balance_usd|floatformat:2 }}</small>
+                                </div>
+                            </div>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Быстрый выбор суммы -->
+            <div class="mt-4">
+                <h6>Быстрая сумма:</h6>
+                <div class="btn-group w-100" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="setAmount(100)">100</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="setAmount(500)">500</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="setAmount(1000)">1,000</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="setAmount(5000)">5,000</button>
+                </div>
+            </div>
+            
+            <!-- Важная информация -->
+            <div class="alert alert-info mt-4">
+                <h6><i class="bi bi-info-circle"></i> Важная информация:</h6>
+                <ul class="mb-0">
+                    <li>Минимальная сумма перевода: 0.01</li>
+                    <li>Комиссия за перевод: 0%</li>
+                    <li>Переводы обрабатываются мгновенно</li>
+                    <li>Невозможно перевести средства самому себе</li>
+                    <li>Можно переводить как пользователям, так и компаниям</li>
+                    <li>Для перевода в компанию укажите её ID</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setAmount(amount) {
+            document.getElementById('id_amount').value = amount;
+        }
+        
+        function setCompanyTransfer(companyId, companyName) {
+            document.getElementById('id_to_user_id').value = companyId;
+            alert(`ID компании "${companyName}" установлен: ${companyId}`);
+        }
+        
+        // Валидация формы
+        document.getElementById('transferForm').addEventListener('submit', function(e) {
+            const toUserId = document.getElementById('id_to_user_id').value;
+            const userId = {{ user.id }};
+            const amount = parseFloat(document.getElementById('id_amount').value);
+            const currency = document.getElementById('id_currency').value;
+            
+            if (!toUserId) {
+                e.preventDefault();
+                alert('Ошибка: Введите ID получателя!');
+                return false;
+            }
+            
+            if (parseInt(toUserId) === userId) {
+                e.preventDefault();
+                alert('Ошибка: Нельзя переводить средства самому себе!');
+                return false;
+            }
+            
+            if (!amount || amount <= 0) {
+                e.preventDefault();
+                alert('Ошибка: Введите корректную сумму!');
+                return false;
+            }
+            
+            // Проверка баланса (опционально, можно убрать)
+            const rubBalance = parseFloat('{{ request.user.profile.balance_rub }}');
+            const usdBalance = parseFloat('{{ request.user.profile.balance_usd }}');
+            
+            if (currency === 'RUB' && amount > rubBalance) {
+                e.preventDefault();
+                alert(`Ошибка: Недостаточно рублей на счету! Доступно: ${rubBalance.toFixed(2)} ₽`);
+                return false;
+            }
+            
+            if (currency === 'USD' && amount > usdBalance) {
+                e.preventDefault();
+                alert(`Ошибка: Недостаточно долларов на счету! Доступно: ${usdBalance.toFixed(2)} $`);
+                return false;
+            }
+        });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

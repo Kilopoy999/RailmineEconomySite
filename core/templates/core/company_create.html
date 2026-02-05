@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание компании</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        .company-create-container {
+            max-width: 700px;
+            margin: 50px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        .company-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .cost-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        .requirement-card {
+            border: 2px solid #f5576c;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #fff5f5;
+        }
+        .btn-create {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            border-radius: 10px;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-create:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(245, 87, 108, 0.3);
+        }
+        .benefit-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .benefit-list li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        .benefit-list li:before {
+            content: "✓";
+            color: #42e695;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                <i class="bi bi-arrow-left"></i> Назад
+            </a>
+            <span class="navbar-text text-white">
+                <i class="bi bi-building"></i> Создание компании
+            </span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="company-create-container">
+            <div class="company-header">
+                <h2><i class="bi bi-building"></i> Создание новой компании</h2>
+                <p>Станьте владельцем бизнеса в банковской системе</p>
+                <div class="cost-badge">
+                    Стоимость: $2,000,000
+                </div>
+            </div>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-{% if message.tags == 'error' %}exclamation-triangle{% else %}check-circle{% endif %}"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Требования и проверка -->
+            <div class="requirement-card">
+                <h5><i class="bi bi-clipboard-check"></i> Проверка требований</h5>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="alert alert-{% if request.user.profile.balance_usd >= 2000000 %}success{% else %}danger{% endif %}">
+                            <i class="bi bi-currency-dollar"></i>
+                            <strong>Баланс USD:</strong> ${{ request.user.profile.balance_usd|floatformat:2 }}
+                            <br>
+                            {% if request.user.profile.balance_usd >= 2000000 %}
+                                <span class="badge bg-success">Требование выполнено</span>
+                            {% else %}
+                                <span class="badge bg-danger">Недостаточно средств</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-info">
+                            <i class="bi bi-cash-stack"></i>
+                            <strong>Требуется:</strong> $2,000,000
+                            <br>
+                            <strong>Не хватает:</strong> 
+                            {% if request.user.profile.balance_usd < 2000000 %}
+                                ${{ 2000000|add:request.user.profile.balance_usd|floatformat:2 }}
+                            {% else %}
+                                $0.00
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Форма создания -->
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Название компании</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-building"></i></span>
+                        {{ form.name }}
+                    </div>
+                    <div class="form-text">
+                        Придумайте уникальное название для вашей компании
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Описание компании</label>
+                    {{ form.description }}
+                    <div class="form-text">
+                        Опишите деятельность вашей компании
+                    </div>
+                </div>
+                
+                <!-- Преимущества компании -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <i class="bi bi-star"></i> Преимущества владения компанией
+                    </div>
+                    <div class="card-body">
+                        <ul class="benefit-list">
+                            <li>Переводы любым пользователям без ограничений</li>
+                            <li>Возможность переводить и рубли, и доллары</li>
+                            <li>Отдельный счет компании с большим лимитом</li>
+                            <li>Приглашение сотрудников в компанию</li>
+                            <li>Вывод средств доступен только владельцу</li>
+                            <li>История всех операций компании</li>
+                            <li>Повышенный статус в системе</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    {% if request.user.profile.balance_usd >= 2000000 %}
+                        <button type="submit" class="btn-create">
+                            <i class="bi bi-plus-circle"></i> Создать компанию
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn-create" disabled>
+                            <i class="bi bi-x-circle"></i> Недостаточно средств
+                        </button>
+                        <div class="alert alert-warning text-center">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Пополните баланс долларов до $2,000,000 для создания компании
+                        </div>
+                    {% endif %}
+                    
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                        Вернуться в панель
+                    </a>
+                </div>
+            </form>
+            
+            <!-- Важная информация -->
+            <div class="alert alert-warning mt-4">
+                <h6><i class="bi bi-shield-exclamation"></i> Важная информация:</h6>
+                <ul class="mb-0">
+                    <li>Средства для создания компании будут переведены на счет компании</li>
+                    <li>Вы становитесь единственным владельцем компании</li>
+                    <li>Вы можете приглашать других пользователей в компанию</li>
+                    <li>Только владелец может выводить средства из компании</li>
+                    <li>Компания может совершать переводы любому пользователю</li>
+                    <li>Удаление компании невозможно - только расформирование</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
