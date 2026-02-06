@@ -427,4 +427,37 @@ def update_exchange_rate(request):
 
 def logout_view(request):
     logout(request)
+
     return redirect('login')
+
+# В самый конец views.py, после всех функций
+from django.contrib.auth.models import User
+from django.db.utils import ProgrammingError, OperationalError
+import os
+
+def create_superuser_if_not_exists():
+    """Создает суперпользователя если его нет"""
+    try:
+        # Проверяем, есть ли уже пользователи
+        if not User.objects.exists():
+            username = os.environ.get('ADMIN_USERNAME', 'admin')
+            email = os.environ.get('ADMIN_EMAIL', 'admin@bank.com')
+            password = os.environ.get('ADMIN_PASSWORD', 'admin123')
+            
+            # Создаем суперпользователя
+            User.objects.create_superuser(
+                username=username,
+                email=email,
+                password=password
+            )
+            print(f"✅ Суперпользователь создан: {username}")
+        else:
+            print("✅ Пользователи уже существуют")
+    except (ProgrammingError, OperationalError) as e:
+        # База данных еще не готова
+        print(f"⚠️  База данных не готова: {e}")
+    except Exception as e:
+        print(f"⚠️  Ошибка создания пользователя: {e}")
+
+# Вызываем при импорте
+create_superuser_if_not_exists()
