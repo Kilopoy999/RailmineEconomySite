@@ -56,7 +56,7 @@ WSGI_APPLICATION = 'bank_system.wsgi.application'
 
 # Database configuration with PostgreSQL on Render
 # Настройки базы данных
-if os.environ.get('DATABASE_URL')
+if os.environ.get('DATABASE_URL'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -109,6 +109,7 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 
 
