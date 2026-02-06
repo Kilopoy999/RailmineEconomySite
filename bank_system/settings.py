@@ -56,37 +56,13 @@ WSGI_APPLICATION = 'bank_system.wsgi.application'
 
 # Database configuration with PostgreSQL on Render
 # Настройки базы данных
-if os.environ.get('DATABASE_URL'):
-    # Используем psycopg3 для PostgreSQL
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('PGDATABASE', ''),
-            'USER': os.environ.get('PGUSER', ''),
-            'PASSWORD': os.environ.get('PGPASSWORD', ''),
-            'HOST': os.environ.get('PGHOST', ''),
-            'PORT': os.environ.get('PGPORT', '5432'),
-            'OPTIONS': {
-                'sslmode': 'require',
-            },
-        }
-    }
-    
-    # Пытаемся получить из DATABASE_URL если нет отдельных переменных
-    try:
-        import dj_database_url
-        db_from_env = dj_database_url.config(default=os.environ.get('DATABASE_URL'))
-        DATABASES['default'].update(db_from_env)
-    except:
-        pass
-else:
-    # SQLite для локальной разработки
+if os.environ.get('DATABASE_URL')
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3'
         }
-    }
+}
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -133,6 +109,7 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 
 
